@@ -1,6 +1,6 @@
 # 番剧记忆力测试（Cloudflare Workers + D1）
 
-线上：https://anime-memory.wxy2641623879.workers.dev
+线上：https://cartoon.lostrain.org/
 
 写下你记得的番剧，自动核对、去重并计数。
 
