@@ -1,0 +1,9 @@
+# 复制成 .dev.vars 后可被 `wrangler dev` 读取（不要提交到仓库）
+# Cloudflare Turnstile 测试密钥（永远通过，仅本地开发用）
+# TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+
+# 可选：给密码哈希加一段服务端 pepper；生产环境建议设置，设置后不要随意更改
+# PASSWORD_PEPPER=replace-with-a-long-random-string
+
+# 可选：覆盖 PBKDF2 迭代次数
+# PBKDF2_ITERATIONS=25000

@@ -1,0 +1,19 @@
+{
+  "name": "anime-memory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "番剧记忆力测试 —— Cloudflare Workers + D1 + Bangumi 在线匹配",
+  "scripts": {
+    "dev": "wrangler dev",
+    "preview": "node tools/preview.mjs",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply anime-memory --local",
+    "db:migrate:remote": "wrangler d1 migrations apply anime-memory --remote",
+    "test:live": "node tools/live-check.mjs",
+    "test:auth": "node tools/auth-check.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.158.0"
+  }
+}

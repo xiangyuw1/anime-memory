@@ -1,0 +1,2155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>番剧记忆力测试</title>
+<meta name="description" content="写下你记得的番剧：本地题库秒认，题库外的名字联网查 Bangumi，进度实时保存，重复只算一次。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2312101c'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23e5402a' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12101c;
+  --bg-2:#191627;
+  --ink:#f4ecdd;
+  --dim:#9c94b8;
+  --line:rgba(244,236,221,.14);
+  --red:#e5402a;
+  --gold:#dfa93f;
+  --green:#6fae8a;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(900px 460px at 78% -8%, rgba(107,86,166,.20), transparent 70%),
+    radial-gradient(700px 400px at 10% 110%, rgba(229,64,42,.08), transparent 70%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(244,236,221,.055) .7px, transparent .8px);
+  background-size:5px 5px;opacity:.55;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(180deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  opacity:.22;
+}
+body.modal-open{overflow:hidden}
+.wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 26px 72px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 0 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:14px;font-size:13px;color:var(--dim);letter-spacing:.08em;flex-wrap:wrap}
+.brand b{color:var(--ink);font-size:15px;font-weight:700;letter-spacing:.05em}
+.live{display:inline-flex;align-items:center;gap:7px;color:var(--red);font-weight:600}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(229,64,42,.45);animation:pulse 2.6s infinite}
+.season{opacity:.65}
+.net{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);letter-spacing:.06em}
+.net i{width:5px;height:5px;border-radius:50%;background:rgba(156,148,184,.55)}
+.net[data-state="ok"]{color:var(--green)}
+.net[data-state="ok"] i{background:var(--green);box-shadow:0 0 7px rgba(111,174,138,.5)}
+.net[data-state="error"]{color:var(--red)}
+.net[data-state="error"] i{background:var(--red)}
+.net[data-state="busy"]{color:var(--gold)}
+.net[data-state="busy"] i{background:var(--gold);animation:pulse 1.4s infinite}
+.top-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.who{
+  appearance:none;font:inherit;font-size:12px;color:var(--ink);background:rgba(244,236,221,.045);
+  border:1px solid var(--line);border-radius:2px;padding:7px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;transition:border-color .15s;
+}
+.who:hover{border-color:rgba(223,169,63,.6)}
+.who-tag{font-size:10px;letter-spacing:.08em;color:var(--gold);border:1px solid rgba(223,169,63,.35);border-radius:2px;padding:0 5px}
+.clock{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:.14em}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:30px;border-bottom:1px solid var(--line)}
+.tab{
+  appearance:none;background:none;border:0;color:var(--dim);font:inherit;font-size:14px;
+  padding:16px 2px 15px;cursor:pointer;position:relative;letter-spacing:.08em;transition:color .15s;
+}
+.tab:hover{color:rgba(244,236,221,.8)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--red)}
+
+/* ---------- shared ---------- */
+.panel{padding-top:44px}
+.panel[hidden]{display:none}
+.hero{
+  font-family:var(--serif);font-weight:900;font-size:clamp(31px,4.8vw,50px);
+  line-height:1.16;margin:0 0 14px;letter-spacing:.01em;
+}
+.lede{color:var(--dim);font-size:14px;max-width:44em;margin:0 0 34px}
+.muted{color:var(--dim);font-size:13px}
+
+/* ---------- recall ---------- */
+.compose{display:flex;align-items:flex-start;gap:34px}
+.entry{flex:1;min-width:0}
+textarea#recall{
+  width:100%;min-height:126px;resize:none;background:transparent;border:0;
+  border-bottom:1px solid var(--line);color:var(--ink);font:inherit;font-size:19px;
+  line-height:1.75;padding:4px 0 14px;outline:none;caret-color:var(--red);
+  transition:border-color .2s;scrollbar-width:thin;scrollbar-color:rgba(244,236,221,.22) transparent;
+}
+textarea#recall::-webkit-scrollbar{width:6px}
+textarea#recall::-webkit-scrollbar-thumb{background:rgba(244,236,221,.2);border-radius:3px}
+textarea#recall::-webkit-scrollbar-track{background:transparent}
+textarea#recall::placeholder{color:rgba(156,148,184,.62)}
+textarea#recall:focus{border-bottom-color:rgba(229,64,42,.65)}
+.entry-actions{display:flex;align-items:center;gap:16px;margin-top:18px;flex-wrap:wrap}
+.tip{font-size:12px;color:var(--dim);letter-spacing:.03em}
+
+.btn{
+  font:inherit;font-size:14px;padding:11px 26px;border-radius:2px;border:1px solid transparent;
+  cursor:pointer;letter-spacing:.07em;transition:background .15s,border-color .15s,transform .12s;
+  white-space:nowrap;
+}
+.btn.primary{background:var(--red);color:#fff7ec;font-weight:700}
+.btn.primary:hover{background:#f04c34}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:rgba(244,236,221,.35)}
+.btn.ghost.danger:hover{border-color:rgba(229,64,42,.6);color:var(--red)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible,.kill:focus-visible,.who:focus-visible,
+.auth-tab:focus-visible,.modal-close:focus-visible,textarea:focus-visible,input:focus-visible{
+  outline:2px solid var(--gold);outline-offset:3px;
+}
+
+/* stamp */
+.stamp{
+  flex:none;width:112px;height:112px;border-radius:50%;border:2px solid var(--red);
+  color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;transform:rotate(-7deg);background:rgba(229,64,42,.045);
+  transition:opacity .3s;
+}
+.stamp::before{content:"";position:absolute;inset:6px;border:1px solid rgba(229,64,42,.45);border-radius:50%}
+.stamp[data-zero="1"]{opacity:.42}
+.stamp .n{font-family:var(--serif);font-weight:900;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
+.stamp .u{font-size:10px;letter-spacing:.42em;text-indent:.42em;margin-top:5px}
+.stamp.thud{animation:thud .6s cubic-bezier(.2,1.5,.35,1)}
+
+/* feedback */
+.feedback{margin-top:26px}
+.fb{display:flex;align-items:baseline;gap:12px;padding:9px 2px;border-bottom:1px dashed rgba(244,236,221,.09);font-size:14px}
+.fb .mark{flex:none;width:16px;font-weight:700;text-align:center}
+.fb.ok .mark{color:var(--red)}
+.fb.dup .mark{color:var(--gold)}
+.fb.miss .mark{color:var(--dim)}
+.fb.error .mark{color:var(--red)}
+.fb.info .mark{color:var(--dim)}
+.fb .body{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+.fb b{font-weight:700;color:var(--ink)}
+.fb small{color:var(--dim);font-size:12px}
+.fb .raw{color:var(--gold)}
+.chip{
+  appearance:none;font:inherit;font-size:12.5px;color:var(--ink);background:rgba(244,236,221,.05);
+  border:1px solid var(--line);border-radius:2px;padding:4px 10px;cursor:pointer;transition:.15s;
+}
+.chip:hover{border-color:var(--gold);color:var(--gold)}
+.chip.active{border-color:rgba(223,169,63,.65);color:var(--gold)}
+.fb .act{
+  appearance:none;font:inherit;font-size:12px;color:var(--red);background:none;
+  border:0;border-bottom:1px solid rgba(229,64,42,.5);padding:1px 0;cursor:pointer;
+}
+.fb .act:hover{color:#f04c34}
+
+/* ---------- ledger ---------- */
+.ledger{margin-top:54px;border-top:1px solid var(--line)}
+.ledger-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:18px 0 12px;flex-wrap:wrap}
+.count-line{font-size:14px;color:var(--dim)}
+.count-line b{color:var(--ink);font-family:var(--serif);font-size:23px;font-weight:900;margin:0 4px;font-variant-numeric:tabular-nums}
+.count-line .sub{opacity:.75;font-size:12px;margin-left:4px}
+.count-sub{font-size:12px;color:var(--dim);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.list-head{display:grid;grid-template-columns:50px minmax(0,1fr) 64px minmax(0,.9fr) 34px;gap:12px;padding:8px 6px 8px;font-size:11px;color:rgba(156,148,184,.7);letter-spacing:.18em;border-top:1px solid rgba(244,236,221,.08)}
+.row{display:grid;grid-template-columns:50px minmax(0,1fr) 64px minmax(0,.9fr) 34px;gap:12px;align-items:center;padding:13px 6px;border-top:1px solid rgba(244,236,221,.08)}
+.row.anim{animation:lineIn .32s ease both}
+.row:hover{background:rgba(244,236,221,.025)}
+.row .idx{font-family:var(--serif);color:var(--red);font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.row .name{font-size:15.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .name span{font-weight:400;color:var(--dim);font-size:12px;margin-left:9px}
+.row .year{color:var(--dim);font-size:12.5px;font-variant-numeric:tabular-nums}
+.row .tags{color:var(--dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tags .src{color:rgba(223,169,63,.85)}
+.row .kill{justify-self:end;opacity:0;background:none;border:0;color:var(--dim);cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;transition:opacity .15s,color .15s}
+.row:hover .kill,.row:focus-within .kill{opacity:1}
+.row .kill:hover{color:var(--red)}
+.empty{color:var(--dim);font-size:14px;padding:26px 6px;border-top:1px solid rgba(244,236,221,.08)}
+.empty[hidden]{display:none}
+
+/* ---------- guess ---------- */
+.slate{position:relative;border:1px solid var(--line);border-left:2px solid var(--red);padding:0 30px 30px;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent 60%)}
+.slate-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 0 12px;font-size:12px;color:var(--dim);letter-spacing:.1em}
+.slate-top b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums}
+.timer{height:2px;background:rgba(244,236,221,.1);margin:0 -30px 24px;position:relative;overflow:hidden}
+.timer i{position:absolute;inset:0 auto 0 0;width:100%;background:var(--red);transform-origin:left center;transition:width .12s linear}
+.q-meta{font-size:13px;color:var(--gold);letter-spacing:.08em}
+.blanks{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 10px}
+.blank{width:36px;height:44px;border:1px solid var(--line);display:grid;place-items:center;font-family:var(--serif);font-size:21px;font-weight:600;color:var(--ink);background:rgba(0,0,0,.16)}
+.blank.filled{border-color:rgba(229,64,42,.55);color:var(--red)}
+.hint-line{font-size:12.5px;color:var(--dim);min-height:22px;margin-bottom:20px}
+.guess-input{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.guess-input input{
+  flex:1;min-width:180px;background:transparent;border:0;border-bottom:1px solid var(--line);
+  color:var(--ink);font:inherit;font-size:17px;padding:9px 0;outline:none;caret-color:var(--red);
+}
+.guess-input input:focus{border-bottom-color:rgba(229,64,42,.65)}
+.guess-input input::placeholder{color:rgba(156,148,184,.55)}
+.q-result{margin-top:20px;font-size:14px;min-height:24px;color:var(--dim)}
+.q-result.good{color:var(--gold)}
+.q-result.bad{color:var(--dim)}
+.q-result b{color:var(--ink)}
+
+/* ---------- record ---------- */
+.verdict{display:flex;align-items:flex-end;gap:26px;padding:10px 0 30px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.verdict .big{font-family:var(--serif);font-weight:900;font-size:clamp(70px,12vw,110px);line-height:.9;color:var(--red);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.verdict .side{padding-bottom:10px}
+.verdict .side .label{font-size:16px;font-weight:600}
+.verdict .side .muted{margin-top:4px}
+.dist{padding:24px 0 6px;border-bottom:1px solid var(--line)}
+.dist h2,.history h2{font-size:12px;font-weight:600;color:var(--dim);letter-spacing:.22em;margin:0 0 16px}
+.bar-row{display:grid;grid-template-columns:58px 1fr 42px;gap:14px;align-items:center;padding:5px 0;font-size:12.5px;color:var(--dim)}
+.bar-row .bar{height:6px;background:rgba(244,236,221,.08);position:relative}
+.bar-row .bar i{position:absolute;inset:0 auto 0 0;background:var(--red);width:0;transition:width .5s ease}
+.bar-row .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.record-actions{display:flex;gap:12px;flex-wrap:wrap;padding:26px 0}
+.history{padding-top:6px}
+.h-item{border-bottom:1px dashed rgba(244,236,221,.09)}
+.h-item summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 2px;cursor:pointer;font-size:13px;color:var(--dim);list-style:none}
+.h-item summary::-webkit-details-marker{display:none}
+.h-item summary b{color:var(--ink);font-variant-numeric:tabular-nums}
+.h-item summary .best{color:var(--gold);font-size:11px;letter-spacing:.1em;margin-left:auto;margin-right:8px}
+.h-item ul{margin:0;padding:0 0 14px 18px;color:var(--dim);font-size:12.5px;line-height:1.9}
+.h-empty{color:var(--dim);font-size:13px;padding:6px 2px}
+
+/* ---------- leaderboard ---------- */
+.board-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.board-note{font-size:11.5px;color:var(--dim);margin-left:4px}
+.board{border-top:1px solid var(--line)}
+.board-row{display:grid;grid-template-columns:48px minmax(0,1fr) 84px;gap:14px;align-items:center;padding:14px 6px;border-bottom:1px solid rgba(244,236,221,.08)}
+.board-row.self{background:rgba(223,169,63,.06)}
+.board-row .rank{font-family:var(--serif);color:var(--red);font-size:14px;font-variant-numeric:tabular-nums}
+.board-row .rank.top{color:var(--gold)}
+.board-row .nick{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board-row .nick-line{display:flex;align-items:center;gap:8px;min-width:0}
+.board-row .badge{font-size:10px;color:var(--dim);border:1px solid var(--line);padding:0 6px;border-radius:2px;white-space:nowrap}
+.board-row .badge.user{color:var(--gold);border-color:rgba(223,169,63,.4)}
+.board-row .sub{font-size:11px;color:var(--dim);margin-top:2px}
+.board-row .num{text-align:right;font-family:var(--serif);font-size:22px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+.board-row .num small{font-family:var(--sans);font-size:11px;font-weight:400;color:var(--dim);margin-left:3px}
+.board-me{margin-top:18px;font-size:13px;color:var(--dim)}
+.board-empty{color:var(--dim);font-size:14px;padding:26px 6px}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:10;background:rgba(8,7,14,.74);display:grid;place-items:center;padding:24px}
+.modal[hidden]{display:none}
+.modal-panel{
+  width:min(430px,100%);max-height:calc(100vh - 48px);overflow:auto;position:relative;
+  background:var(--bg-2);border:1px solid var(--line);border-left:2px solid var(--red);
+  padding:30px 28px 26px;box-shadow:0 26px 90px rgba(0,0,0,.55);
+}
+.modal-close{
+  position:absolute;top:8px;right:10px;width:34px;height:34px;background:none;border:0;
+  color:var(--dim);font-size:22px;line-height:1;cursor:pointer;
+}
+.modal-close:hover{color:var(--ink)}
+.auth-title{font-family:var(--serif);font-weight:900;font-size:24px;margin:0 0 6px}
+.auth-current{font-size:12px;color:var(--dim);margin:0 0 20px;letter-spacing:.03em}
+.auth-tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.auth-tab{appearance:none;background:none;border:0;color:var(--dim);font:inherit;font-size:13.5px;padding:0 1px 10px;cursor:pointer;position:relative;letter-spacing:.08em}
+.auth-tab[aria-selected="true"]{color:var(--ink)}
+.auth-tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--red)}
+.auth-field{display:block;font-size:11.5px;color:var(--dim);letter-spacing:.08em;margin-bottom:14px}
+.auth-field input{
+  display:block;width:100%;margin-top:6px;background:rgba(0,0,0,.22);border:1px solid var(--line);
+  border-radius:2px;color:var(--ink);font:inherit;font-size:15px;padding:10px 12px;outline:none;
+}
+.auth-field input:focus{border-color:rgba(229,64,42,.6)}
+.auth-error{min-height:18px;font-size:12.5px;color:var(--red);margin:6px 0 8px;line-height:1.5}
+.auth-submit{width:100%;margin-top:2px}
+.auth-note{font-size:11.5px;color:var(--dim);line-height:1.65;margin:14px 0 0}
+.turnstile-wrap{margin:10px 0 4px;display:flex;justify-content:center;min-height:0}
+.turnstile-wrap[hidden]{display:none}
+.auth-account-line{font-size:14px;color:var(--dim);margin:4px 0 14px}
+.auth-account-line b{color:var(--ink)}
+.auth-offline{font-size:13px;color:var(--red);margin:8px 0 0}
+#auth-forms[hidden],#auth-account[hidden],#auth-offline[hidden],#auth-confirm-wrap[hidden]{display:none}
+
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:64px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:rgba(156,148,184,.7);letter-spacing:.05em}
+.foot a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(223,169,63,.35)}
+.foot a:hover{border-bottom-color:var(--gold)}
+
+@keyframes thud{
+  0%{transform:rotate(-7deg) scale(1)}
+  28%{transform:rotate(-1deg) scale(1.16)}
+  58%{transform:rotate(-10deg) scale(.96)}
+  100%{transform:rotate(-7deg) scale(1)}
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(229,64,42,.45)}
+  70%{box-shadow:0 0 0 7px rgba(229,64,42,0)}
+  100%{box-shadow:0 0 0 0 rgba(229,64,42,0)}
+}
+@keyframes lineIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+@media (max-width:700px){
+  .wrap{padding:0 18px 56px}
+  .compose{flex-direction:column;gap:22px}
+  textarea#recall{min-height:164px;font-size:17px}
+  .stamp{align-self:flex-end;width:92px;height:92px;margin-top:-6px}
+  .stamp .n{font-size:36px}
+  .row{grid-template-columns:34px minmax(0,1fr) 52px 30px}
+  .row .tags,.list-head{display:none}
+  .row .kill{opacity:.55}
+  .slate{padding:0 18px 24px}
+  .timer{margin:0 -18px 22px}
+  .blank{width:30px;height:38px;font-size:18px}
+  .foot{flex-direction:column;gap:6px}
+  .tabs{gap:18px}
+  .top-right{width:100%;justify-content:space-between}
+  .modal-panel{padding:26px 20px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <span class="live"><i></i>放送中</span>
+      <b>番剧记忆力测试</b>
+      <span class="season">深夜档</span>
+      <span class="net" id="net-state" data-state="unknown"><i></i><span id="net-text">联网中</span></span>
+    </div>
+    <div class="top-right">
+      <button class="who" id="who" type="button" aria-haspopup="dialog">
+        <span id="who-name">连接中…</span>
+        <span class="who-tag" id="who-tag" hidden>登录</span>
+      </button>
+      <div class="clock" id="clock">在场 00:00:00</div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="模式">
+    <button class="tab" role="tab" aria-selected="true" data-panel="panel-recall">自由回忆</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="panel-guess">猜番挑战</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="panel-record">成绩单</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="panel-board">排行榜</button>
+  </nav>
+
+  <main>
+    <section id="panel-recall" class="panel">
+      <h1 class="hero">你还记得多少部番？</h1>
+      <p class="lede">本地题库秒认，题库外的名字会联网查 Bangumi。中文名、日文名、英文名、缩写、拼音首字母都行，错一两个字也认得出。进度实时保存，同一部作品只算一次。</p>
+
+      <div class="compose">
+        <div class="entry">
+          <label class="sr-only" for="recall">输入番剧名</label>
+          <textarea id="recall" placeholder="鬼灭之刃、aot、进巨、gmdzr……&#10;可以一次粘贴一整个列表，用逗号或换行分隔。" autocomplete="off" spellcheck="false"></textarea>
+          <div class="entry-actions">
+            <button class="btn primary" id="submit-recall">记下来</button>
+            <span class="tip">回车确认 · 未收录会自动联网核对</span>
+          </div>
+        </div>
+        <div class="stamp" id="stamp" data-zero="1" aria-label="已记住 0 部">
+          <span class="n" id="stamp-n">0</span>
+          <span class="u">部</span>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+
+      <section class="ledger">
+        <div class="ledger-head">
+          <div class="count-line">已记住 <b id="count-n">0</b> 部 <span class="sub">/ 本地题库 <span id="local-total">0</span> 部 · 在线 Bangumi</span></div>
+          <div class="count-sub" id="elapsed">用时 00:00:00</div>
+        </div>
+        <div class="list-head" aria-hidden="true"><span>序号</span><span>作品</span><span>年份</span><span>来源 / 类型</span><span></span></div>
+        <div id="list"></div>
+        <p class="empty" id="empty">还没有记录。写下你想起的第一部番。</p>
+      </section>
+    </section>
+
+    <section id="panel-guess" class="panel" hidden>
+      <h1 class="hero">给你一点线索。</h1>
+      <p class="lede">题目来自本地题库：看年份、类型和字数猜番名。30 秒一题，开始输入后计时。</p>
+
+      <div class="slate">
+        <div class="slate-top">
+          <span>第 <b id="q-num">1</b> 题</span>
+          <span>答对 <b id="q-score">0</b> 题</span>
+        </div>
+        <div class="timer"><i id="timer-fill"></i></div>
+        <div class="q-meta" id="q-meta">—</div>
+        <div class="blanks" id="q-blanks" aria-hidden="true"></div>
+        <div class="hint-line" id="q-hint">提示：先看年份和类型，再想名字。</div>
+        <div class="guess-input">
+          <label class="sr-only" for="guess">番剧名</label>
+          <input id="guess" type="text" placeholder="写出你的答案" autocomplete="off" spellcheck="false">
+          <button class="btn primary" id="guess-submit">回答</button>
+          <button class="btn ghost" id="guess-hint">要提示</button>
+          <button class="btn ghost" id="guess-next" hidden>下一题</button>
+        </div>
+        <div class="q-result" id="q-result" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="panel-record" class="panel" hidden>
+      <h1 class="hero">这一轮，你记住了多少？</h1>
+      <p class="lede">进度保存在服务器里，换设备登录同一账号就能继续。重复的番不计数，换个别名再写一遍也不会重复计。</p>
+
+      <div class="verdict">
+        <div class="big" id="r-count">0</div>
+        <div class="side">
+          <div class="label">部番</div>
+          <div class="muted" id="r-elapsed"></div>
+          <div class="muted" id="r-sources"></div>
+          <div class="muted" id="r-guess"></div>
+        </div>
+      </div>
+
+      <div class="dist">
+        <h2>年代分布</h2>
+        <div id="r-decades"></div>
+      </div>
+      <div class="dist">
+        <h2>类型偏好</h2>
+        <div id="r-tags"></div>
+      </div>
+
+      <div class="record-actions">
+        <button class="btn primary" id="save-score">保存这一轮</button>
+        <button class="btn ghost" id="copy-list">复制清单</button>
+        <button class="btn ghost" id="download-list">下载清单</button>
+        <button class="btn ghost danger" id="reset-all">清空本轮</button>
+      </div>
+
+      <div class="history">
+        <h2>历史成绩</h2>
+        <div id="r-history"></div>
+      </div>
+    </section>
+
+    <section id="panel-board" class="panel" hidden>
+      <h1 class="hero">排行榜</h1>
+      <p class="lede">按当前记住的番剧数量实时排名。游客和注册用户都能上榜，同一部作品只算一次。</p>
+      <div class="board-tools">
+        <button class="chip active" type="button" data-scope="all">全部</button>
+        <button class="chip" type="button" data-scope="users">注册用户</button>
+        <span class="board-note" id="board-note"></span>
+      </div>
+      <div class="board" id="board-list"></div>
+      <p class="board-me" id="board-me" hidden></p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>匹配：本地题库 + <a href="https://bgm.tv" target="_blank" rel="noopener">Bangumi</a> 在线检索</span>
+    <span id="global-stats">全站记录加载中…</span>
+    <span>数据：D1 · 进度实时保存</span>
+  </footer>
+</div>
+
+<div class="modal" id="auth-modal" hidden>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <button class="modal-close" id="auth-close" type="button" aria-label="关闭">×</button>
+    <h2 class="auth-title" id="auth-title">账号</h2>
+    <p class="auth-current" id="auth-current">当前身份：未连接</p>
+
+    <div id="auth-forms">
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab" type="button" role="tab" data-mode="login" aria-selected="true">登录</button>
+        <button class="auth-tab" type="button" role="tab" data-mode="register" aria-selected="false">注册</button>
+      </div>
+      <form id="auth-form" novalidate>
+        <label class="auth-field">用户名
+          <input id="auth-user" name="username" autocomplete="username" maxlength="20" placeholder="2–20 个字符，可用中文">
+        </label>
+        <label class="auth-field">密码
+          <input id="auth-pass" name="password" type="password" autocomplete="current-password" maxlength="64" placeholder="至少 6 个字符">
+        </label>
+        <label class="auth-field" id="auth-confirm-wrap" hidden>确认密码
+          <input id="auth-pass2" type="password" autocomplete="new-password" maxlength="64">
+        </label>
+        <div class="turnstile-wrap" id="turnstile-wrap" hidden></div>
+        <div class="auth-error" id="auth-error" role="alert"></div>
+        <button class="btn primary auth-submit" id="auth-submit" type="submit">登录</button>
+        <p class="auth-note" id="auth-note">登录后，这只浏览器上的游客进度会并入账号。</p>
+      </form>
+    </div>
+
+    <div id="auth-account" hidden>
+      <p class="auth-account-line">已登录为 <b id="auth-account-name"></b></p>
+      <p class="auth-note">换一台设备登录同一账号，可以继续这里的进度；游客身份会随浏览器变化。</p>
+      <button class="btn ghost danger" id="auth-logout" type="button">退出登录</button>
+    </div>
+
+    <p class="auth-offline" id="auth-offline" hidden>服务器未连接，暂时无法登录或注册。请刷新页面重试。</p>
+  </div>
+</div>
+
+<script src="./data.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 本地题库引擎 ================= */
+  const LOCAL_RAW = window.ANIME_RAW || [];
+
+  const TRAD_PAIRS = "進进 撃击 戰战 鬥斗 龍龙 門门 國国 學学 愛爱 劇剧 場场 術术 會会 動动 畫画 靈灵 貓猫 讓让 說说 戀恋 線线 緣缘 結结 終终 記记 憶忆 夢梦 現现 實实 虛虚 劍剑 氣气 強强 銀银 鐵铁 車车 醫医 藥药 師师 傳传 獸兽 獵猎 殺杀 屍尸 惡恶 異异 聞闻 轟轰 華华 麗丽 漢汉 藝艺 閒闲 間间 陽阳 陰阴 兒儿 兩两 個个 們们 時时 東东 馬马 鳥鸟 魚鱼 電电 聲声 讀读 書书 寫写 對对 頭头 髮发 體体 點点 麼么 這这 誰谁 為为 與与 從从 來来 見见 處处 業业 樂乐 園园 團团 圖图 館馆 壞坏 變变 歸归 鄉乡 萬万 億亿 號号 稱称 種种 類类 級级 極极 決决 開开 關关 閉闭 無无 雙双 單单 邊边 遠远 運运 達达 過过 還还 連连 續续 經经 給给 請请 謝谢 認认 識识 話话 語语 誤误 課课 試试 驗验 證证 據据 檔档 網网 鋼钢 鍊炼 爐炉 燒烧 燈灯 熱热 願愿 聖圣 優优 視视 頻频 頁页 議议 樓楼 廁厕 鳳凤 蟲虫 螢萤 雲云 風风 紅红 藍蓝 綠绿 黃黄 銅铜 寶宝 貝贝 幣币 錢钱 買买 賣卖 貴贵 輸输 贏赢 勝胜 敗败 爭争 搶抢 奪夺 護护 衛卫 軍军 隊队 將将 帥帅 槍枪 彈弹 機机 飛飞 躍跃 傷伤 癒愈 誠诚 偽伪 祕秘 謎谜 題题 問问 難难 險险 舊旧 櫻樱 涼凉 宮宫 島岛 浜滨 広广 沢泽 絵绘 緒绪 縁缘 響响 黒黑 竜龙 剣剑 闘斗 覚觉 変变 対对 証证 録录 弾弹 滅灭 遊游 戲戏 戯戏 姫姬";
+  const TRAD = Object.create(null);
+  TRAD_PAIRS.split(/\s+/).forEach(function(pair){
+    if (pair.length >= 2) TRAD[pair[0]] = pair[1];
+  });
+  const PUNCT = /[\s　☆★×♪〜《》〈〉「」『』【】\[\]（）(){}<>!?！？.,，。:：;；·・~～\-—_'"“”‘’|+*&#@%^$=]+/g;
+
+  function baseNorm(input){
+    let s = String(input == null ? '' : input).normalize('NFKC').toLowerCase();
+    s = s.replace(/./gu, function(ch){ return TRAD[ch] || ch; });
+    s = s.replace(PUNCT, '').replace(/\//g, '');
+    s = s.replace(/[的之]/g, '');
+    return s;
+  }
+  function norm(input){
+    let s = baseNorm(input);
+    s = s.replace(/第[0-9一二三四五六七八九十]+[季期部集话章篇]/g, '');
+    s = s.replace(/最终季|最终章|最终篇|剧场版|电影版|特别篇|总集篇|新剧场版|完全版/g, '');
+    s = s.replace(/(finalseason|season[0-9]+|[0-9]+(st|nd|rd|th)season|part[0-9]+|cour[0-9]+|ova|oad)/g, '');
+    return s;
+  }
+  const normStrict = baseNorm;
+  function cpLen(s){ return Array.from(s).length; }
+  function lev(a, b){
+    const A = Array.from(a), B = Array.from(b);
+    const n = A.length, m = B.length;
+    if (!n) return m;
+    if (!m) return n;
+    let prev = new Array(m + 1), cur = new Array(m + 1);
+    for (let j = 0; j <= m; j++) prev[j] = j;
+    for (let i = 1; i <= n; i++){
+      cur[0] = i;
+      for (let j = 1; j <= m; j++){
+        const cost = A[i - 1] === B[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      const t = prev; prev = cur; cur = t;
+    }
+    return prev[m];
+  }
+  function scoreKey(q, k){
+    if (q === k) return { s: 1, d: 0 };
+    const ql = cpLen(q), kl = cpLen(k);
+    const min = Math.min(ql, kl), max = Math.max(ql, kl);
+    if (!min) return null;
+    const ascii = /^[a-z0-9]+$/.test(q);
+    if (min >= 2 && (q.indexOf(k) >= 0 || k.indexOf(q) >= 0)){
+      if (!(ascii && min < 3)) return { s: 0.70 + 0.28 * (min / max), d: max - min, sub: true };
+    }
+    if (Math.abs(ql - kl) > Math.max(2, Math.floor(max * 0.4))) return null;
+    const d = lev(q, k);
+    const s = 1 - d / max;
+    if (s < 0.5) return null;
+    return { s: s, d: d };
+  }
+
+  const DB = LOCAL_RAW.map(function(row, id){
+    const zh = row[0] || '', ja = row[1] || '', en = row[2] || '';
+    const year = row[3] || 0;
+    const tags = (row[4] || '').split('|').filter(Boolean);
+    const extra = (row[5] || '').split('|').filter(Boolean);
+    const rawNames = [zh, ja, en].concat(extra).filter(Boolean);
+    const aliases = [];
+    if (zh) aliases.push({ text: zh, src: 'zh' });
+    if (ja) aliases.push({ text: ja, src: 'ja' });
+    if (en) aliases.push({ text: en, src: 'en' });
+    extra.forEach(function(a){ aliases.push({ text: a, src: 'alias' }); });
+    if (en){
+      const words = en.split(/[^a-z0-9]+/i).filter(function(w){ return w.length > 1; });
+      const acr = words.map(function(w){ return w[0]; }).join('');
+      if (acr.length >= 3 && acr.length <= 6) aliases.push({ text: acr, src: 'acronym' });
+    }
+    const keys = [];
+    const seen = Object.create(null);
+    aliases.forEach(function(a){
+      const k = norm(a.text);
+      if (k && !seen[k]){ seen[k] = true; keys.push({ key: k, src: a.src }); }
+    });
+    return { id: id, zh: zh, ja: ja, en: en, year: year, tags: tags, keys: keys, names: rawNames };
+  });
+
+  const EXACT = new Map();
+  DB.forEach(function(e){
+    e.keys.forEach(function(k){
+      const list = EXACT.get(k.key);
+      if (list){ if (list.indexOf(e.id) < 0) list.push(e.id); }
+      else EXACT.set(k.key, [e.id]);
+    });
+  });
+
+  function localLookup(raw){
+    const q = norm(raw);
+    if (!q) return { status: 'empty', q: q };
+    if (EXACT.has(q)){
+      const ids = EXACT.get(q).slice();
+      if (ids.length === 1) return { status: 'exact', id: ids[0], q: q };
+      return {
+        status: 'ambiguous', q: q, exact: true,
+        candidates: ids.map(function(id){ return { id: id, s: 1, d: 0 }; })
+      };
+    }
+    const best = new Map();
+    for (let i = 0; i < DB.length; i++){
+      const e = DB[i];
+      let b = null;
+      for (let j = 0; j < e.keys.length; j++){
+        const r = scoreKey(q, e.keys[j].key);
+        if (r && (!b || r.s > b.s)){
+          b = { s: r.s, d: r.d, sub: !!r.sub, key: e.keys[j].key, src: e.keys[j].src };
+        }
+      }
+      if (b && b.s >= 0.5) best.set(e.id, b);
+    }
+    const arr = [];
+    best.forEach(function(v, id){ arr.push({ id: id, s: v.s, d: v.d, sub: v.sub }); });
+    arr.sort(function(a, b){ return b.s - a.s; });
+    if (!arr.length) return { status: 'none', q: q };
+    const first = arr[0];
+    const second = arr[1];
+    const margin = first.s - (second ? second.s : 0);
+    const auto = first.s >= 0.88 || (first.d <= 1 && cpLen(q) >= 4);
+    if (auto && margin >= 0.04) return { status: 'fuzzy', id: first.id, s: first.s, q: q };
+    if (first.s >= 0.55) return { status: 'ambiguous', q: q, candidates: arr.slice(0, 4) };
+    return { status: 'none', q: q };
+  }
+
+  function splitInput(text){
+    const out = [];
+    String(text || '').split(/\r?\n/).forEach(function(line){
+      const cleaned = line
+        .replace(/^\s*\d{1,3}\s*[.、)]\s*/, '')
+        .replace(/^[-*·]\s*/, '')
+        .trim();
+      if (!cleaned) return;
+      cleaned.split(/[,，、;；|]+/).forEach(function(part){
+        const v = part.trim();
+        if (v) out.push(v);
+      });
+    });
+    return out;
+  }
+
+  /* ================= 状态 ================= */
+  const state = {
+    identity: null,
+    entries: [],
+    rounds: [],
+    board: null,
+    boardScope: 'all',
+    startedAt: Date.now(),
+    busy: false,
+    online: 'unknown',
+    siteKey: '',
+    configLoaded: false
+  };
+  let feed = [];
+  let freshKeys = new Set();
+  let statsTimer = null;
+  let pendingOps = [];
+  let flushTimer = null;
+  let flushPromise = null;
+  let authMode = 'login';
+  let tsWidget = null;
+  let tsPromise = null;
+  let lastFocus = null;
+
+  const USERNAME_RE = /^[\p{L}\p{N}_]{2,20}$/u;
+
+  const $ = function(id){ return document.getElementById(id); };
+  const recallEl = $('recall');
+  const feedbackEl = $('feedback');
+  const stampEl = $('stamp');
+  const stampNumEl = $('stamp-n');
+  const countNumEl = $('count-n');
+  const localTotalEl = $('local-total');
+  const elapsedEl = $('elapsed');
+  const clockEl = $('clock');
+  const listEl = $('list');
+  const emptyEl = $('empty');
+  const submitBtn = $('submit-recall');
+  const netEl = $('net-state');
+  const netTextEl = $('net-text');
+  const globalEl = $('global-stats');
+  const whoBtn = $('who');
+  const whoNameEl = $('who-name');
+  const whoTagEl = $('who-tag');
+  const rCountEl = $('r-count');
+  const rElapsedEl = $('r-elapsed');
+  const rSourcesEl = $('r-sources');
+  const rGuessEl = $('r-guess');
+  const rDecadesEl = $('r-decades');
+  const rTagsEl = $('r-tags');
+  const rHistoryEl = $('r-history');
+  const boardListEl = $('board-list');
+  const boardMeEl = $('board-me');
+  const boardNoteEl = $('board-note');
+  const modalEl = $('auth-modal');
+  const authCloseEl = $('auth-close');
+  const authCurrentEl = $('auth-current');
+  const authFormsEl = $('auth-forms');
+  const authAccountEl = $('auth-account');
+  const authAccountNameEl = $('auth-account-name');
+  const authOfflineEl = $('auth-offline');
+  const authFormEl = $('auth-form');
+  const authUserEl = $('auth-user');
+  const authPassEl = $('auth-pass');
+  const authPass2El = $('auth-pass2');
+  const authConfirmWrapEl = $('auth-confirm-wrap');
+  const authErrorEl = $('auth-error');
+  const authSubmitEl = $('auth-submit');
+  const authNoteEl = $('auth-note');
+  const authLogoutEl = $('auth-logout');
+  const tsWrapEl = $('turnstile-wrap');
+
+  localTotalEl.textContent = String(DB.length);
+
+  /* ================= 工具 ================= */
+  const pad = function(n){ return String(n).padStart(2, '0'); };
+  function fmtClock(ms){
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60);
+  }
+  function fmtShort(ms){
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+    return h ? (h + ' 小时 ' + m + ' 分') : (m + ' 分 ' + (s % 60) + ' 秒');
+  }
+  function stampDate(ts){
+    const d = new Date(ts);
+    return pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function el(tag, cls, text){
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function sourceLabel(src){
+    if (src === 'bgm') return 'Bangumi';
+    if (src === 'custom') return '手动';
+    return '本地';
+  }
+  function isHttp(){ return location.protocol === 'http:' || location.protocol === 'https:'; }
+
+  async function api(path, options){
+    const opts = options || {};
+    const headers = Object.assign({}, opts.headers || {});
+    if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
+    let data = null;
+    try { data = await res.json(); } catch (err) {}
+    if (!res.ok){
+      const error = new Error((data && data.error) || ('HTTP ' + res.status));
+      error.status = res.status;
+      error.code = data && data.error;
+      throw error;
+    }
+    return data;
+  }
+
+  /* ================= 身份 ================= */
+  function applyIdentity(identity){
+    state.identity = identity || null;
+    if (identity){
+      state.online = 'ok';
+      if (Number.isFinite(identity.startedAt) && identity.startedAt > 0){
+        state.startedAt = identity.startedAt;
+      }
+    }
+    renderWho();
+  }
+
+  async function ensureIdentity(){
+    try {
+      const me = await api('/api/auth/me');
+      applyIdentity(me.identity);
+    } catch (err) {
+      if (err.status === 401){
+        const guest = await api('/api/auth/guest', { method: 'POST' });
+        applyIdentity(guest.identity);
+      } else {
+        throw err;
+      }
+    }
+    state.online = 'ok';
+  }
+
+  async function loadConfig(){
+    try {
+      const config = await api('/api/config');
+      state.siteKey = config.turnstileSiteKey || '';
+      state.configLoaded = true;
+    } catch (err) {
+      state.siteKey = '';
+      state.configLoaded = true;
+    }
+  }
+
+  async function ensureConfig(){
+    if (state.configLoaded) return;
+    await loadConfig();
+  }
+
+  function renderWho(){
+    const identity = state.identity;
+    if (!identity){
+      whoNameEl.textContent = state.online === 'error' ? '未连接' : '连接中…';
+      whoTagEl.hidden = true;
+      return;
+    }
+    whoNameEl.textContent = identity.displayName;
+    whoTagEl.hidden = false;
+    whoTagEl.textContent = identity.type === 'user' ? '账号' : '登录';
+  }
+
+  function renderNet(){
+    let stateName = state.online;
+    let text = '在线匹配';
+    if (state.busy){ stateName = 'busy'; text = '联网核对中'; }
+    else if (state.online === 'ok'){ text = '在线匹配'; }
+    else if (state.online === 'error'){ stateName = 'error'; text = '在线匹配不可用'; }
+    else if (state.online === 'fatal'){ stateName = 'error'; text = '需要服务器'; }
+    netEl.setAttribute('data-state', stateName);
+    netTextEl.textContent = text;
+  }
+
+  /* ================= 登录 / 注册 ================= */
+  function setAuthBusy(busy){
+    authSubmitEl.disabled = busy;
+    authLogoutEl.disabled = busy;
+    authSubmitEl.textContent = busy ? '请稍候…' : (authMode === 'register' ? '注册' : '登录');
+  }
+
+  function setAuthError(text){
+    authErrorEl.textContent = text || '';
+  }
+
+  function mapAuthError(err){
+    if (!err || !err.code) return '网络连接失败，请稍后再试。';
+    const messages = {
+      bad_username: '用户名需要 2–20 个字符，只能用中文、字母、数字或下划线。',
+      bad_password: '密码需要 6–64 个字符。',
+      username_taken: '这个用户名已经被注册了。',
+      invalid_credentials: '用户名或密码不对。',
+      already_logged_in: '当前已经登录，请先退出登录。',
+      turnstile_failed: '人机验证没有通过，请重试。',
+      rate_limited: '尝试太频繁，请十分钟后再试。',
+      no_identity: '登录状态失效，请刷新页面。'
+    };
+    return messages[err.code] || ('操作失败：' + err.code);
+  }
+
+  function setAuthMode(mode){
+    authMode = mode;
+    document.querySelectorAll('.auth-tab').forEach(function(tab){
+      tab.setAttribute('aria-selected', tab.dataset.mode === mode ? 'true' : 'false');
+    });
+    authConfirmWrapEl.hidden = mode !== 'register';
+    authSubmitEl.textContent = mode === 'register' ? '注册' : '登录';
+    authPassEl.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+    authNoteEl.textContent = mode === 'register'
+      ? '注册后，当前游客进度会并入账号，之后换设备也能继续。'
+      : '登录后，这只浏览器上的游客进度会并入账号。';
+    setAuthError('');
+    resetTurnstile();
+  }
+
+  function renderAuthView(){
+    const identity = state.identity;
+    authCurrentEl.textContent = identity
+      ? ('当前身份：' + identity.displayName + (identity.type === 'user' ? '（注册用户）' : '（游客）'))
+      : '当前身份：未连接';
+
+    const offline = !identity || state.online === 'fatal';
+    authOfflineEl.hidden = !offline;
+    if (offline){
+      authFormsEl.hidden = true;
+      authAccountEl.hidden = true;
+      return;
+    }
+    if (identity.type === 'user'){
+      authFormsEl.hidden = true;
+      authAccountEl.hidden = false;
+      authAccountNameEl.textContent = identity.displayName;
+      return;
+    }
+    authFormsEl.hidden = false;
+    authAccountEl.hidden = true;
+    setAuthMode(authMode);
+    renderTurnstile();
+  }
+
+  async function openAuth(){
+    lastFocus = document.activeElement;
+    await ensureConfig();
+    authMode = 'login';
+    authUserEl.value = '';
+    authPassEl.value = '';
+    authPass2El.value = '';
+    modalEl.hidden = false;
+    document.body.classList.add('modal-open');
+    setAuthError('');
+    renderAuthView();
+    if (state.identity && state.identity.type !== 'user'){
+      setTimeout(function(){ authUserEl.focus(); }, 60);
+    }
+  }
+
+  function closeAuth(){
+    modalEl.hidden = true;
+    document.body.classList.remove('modal-open');
+    setAuthError('');
+    resetTurnstile();
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function ensureTurnstile(){
+    if (!state.siteKey) return Promise.resolve(false);
+    if (window.turnstile) return Promise.resolve(true);
+    if (tsPromise) return tsPromise;
+    tsPromise = new Promise(function(resolve, reject){
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.onload = function(){ resolve(true); };
+      script.onerror = function(){ tsPromise = null; reject(new Error('turnstile_load_failed')); };
+      document.head.appendChild(script);
+    });
+    return tsPromise;
+  }
+
+  function renderTurnstile(){
+    if (!state.siteKey){ tsWrapEl.hidden = true; return; }
+    tsWrapEl.hidden = false;
+    ensureTurnstile().then(function(ok){
+      if (!ok || !window.turnstile) return;
+      if (tsWidget != null){
+        try { window.turnstile.reset(tsWidget); } catch (err) {}
+        return;
+      }
+      try {
+        tsWidget = window.turnstile.render(tsWrapEl, {
+          sitekey: state.siteKey,
+          theme: 'dark'
+        });
+      } catch (err) { /* 渲染失败时提交会给出提示 */ }
+    }).catch(function(){});
+  }
+
+  function resetTurnstile(){
+    if (tsWidget != null && window.turnstile){
+      try { window.turnstile.reset(tsWidget); } catch (err) {}
+    }
+  }
+
+  async function submitAuth(ev){
+    ev.preventDefault();
+    const username = authUserEl.value.trim();
+    const password = authPassEl.value;
+    if (!username) return setAuthError('请输入用户名。');
+    if (!password) return setAuthError('请输入密码。');
+    if (authMode === 'register'){
+      if (!USERNAME_RE.test(username)) return setAuthError('用户名需要 2–20 个字符，只能用中文、字母、数字或下划线。');
+      if (Array.from(password).length < 6) return setAuthError('密码至少需要 6 个字符。');
+      if (password !== authPass2El.value) return setAuthError('两次输入的密码不一致。');
+    }
+    let token = '';
+    if (state.siteKey){
+      if (!window.turnstile || tsWidget == null) return setAuthError('人机验证还没加载好，请稍等。');
+      token = window.turnstile.getResponse(tsWidget) || '';
+      if (!token) return setAuthError('请先完成人机验证。');
+    }
+
+    setAuthBusy(true);
+    await flushQueue();
+    if (pendingOps.length){
+      setAuthBusy(false);
+      return setAuthError('还有进度没有保存，请检查网络后再试。');
+    }
+    const oldId = state.identity ? state.identity.id : '';
+    try {
+      const data = await api('/api/auth/' + authMode, {
+        method: 'POST',
+        body: { username: username, password: password, turnstileToken: token }
+      });
+      if (oldId && data.identity && oldId !== data.identity.id) clearPendingStorage(oldId);
+      applyIdentity(data.identity);
+      closeAuth();
+      await reloadAfterAuth(authMode === 'register'
+        ? '注册成功，当前游客进度已并入账号。'
+        : '登录成功，进度已合并。');
+    } catch (err) {
+      resetTurnstile();
+      setAuthError(mapAuthError(err));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function doLogout(){
+    setAuthBusy(true);
+    await flushQueue();
+    if (pendingOps.length){
+      setAuthBusy(false);
+      return setAuthError('还有进度没有保存，请检查网络后再试。');
+    }
+    const oldId = state.identity ? state.identity.id : '';
+    try {
+      const data = await api('/api/auth/logout', { method: 'POST' });
+      if (oldId) clearPendingStorage(oldId);
+      if (!data.identity){
+        state.online = 'error';
+        applyIdentity(null);
+        closeAuth();
+        renderAll();
+        return;
+      }
+      applyIdentity(data.identity);
+      closeAuth();
+      await reloadAfterAuth('已退出登录，当前是新的游客身份。原账号进度仍保存在服务器上。');
+    } catch (err) {
+      setAuthError('退出登录失败，请稍后再试。');
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function reloadAfterAuth(message){
+    state.entries = [];
+    state.rounds = [];
+    state.board = null;
+    pendingOps = [];
+    loadPending();
+    await loadEntries();
+    applyPendingToState();
+    await flushQueue();
+    await Promise.all([loadRounds(), loadStats()]);
+    feed = [];
+    if (message) pushFeed({ type: 'info', text: message });
+    renderAll();
+    if (!$('panel-board').hidden) loadBoard();
+  }
+
+  /* ================= 待同步队列 ================= */
+  function pendingStorageKey(){
+    return state.identity ? ('anime-memory-pending:' + state.identity.id) : '';
+  }
+  function clearPendingStorage(identityId){
+    try { localStorage.removeItem('anime-memory-pending:' + identityId); } catch (err) {}
+  }
+  function loadPending(){
+    pendingOps = [];
+    const key = pendingStorageKey();
+    if (!key) return;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)){
+        pendingOps = list.filter(function(op){
+          if (!op || typeof op.type !== 'string') return false;
+          if (op.type === 'clear') return true;
+          if (op.type === 'delete') return typeof op.key === 'string';
+          if (op.type === 'add') return op.entry && typeof op.entry.key === 'string';
+          return false;
+        });
+      }
+    } catch (err) { pendingOps = []; }
+  }
+  function savePending(){
+    const key = pendingStorageKey();
+    if (!key) return;
+    try {
+      if (pendingOps.length) localStorage.setItem(key, JSON.stringify(pendingOps));
+      else localStorage.removeItem(key);
+    } catch (err) {}
+  }
+  function queueOp(op){
+    if (!state.identity) return;
+    if (op.type === 'clear'){
+      pendingOps = [op];
+    } else {
+      const key = op.type === 'add' ? op.entry.key : op.key;
+      pendingOps = pendingOps.filter(function(x){
+        if (x.type === 'clear') return true;
+        return (x.type === 'add' ? x.entry.key : x.key) !== key;
+      });
+      pendingOps.push(op);
+    }
+    savePending();
+    scheduleFlush(60);
+  }
+  function scheduleFlush(ms){
+    if (flushTimer) clearTimeout(flushTimer);
+    flushTimer = setTimeout(function(){ flushTimer = null; flushQueue(); }, ms || 4000);
+  }
+  async function flushQueue(){
+    if (!state.identity) return;
+    if (flushPromise) return flushPromise;
+    flushPromise = (async function(){
+      while (pendingOps.length){
+        const op = pendingOps[0];
+        try {
+          if (op.type === 'add'){
+            await api('/api/entries', { method: 'POST', body: op.entry });
+          } else if (op.type === 'delete'){
+            await api('/api/entries?key=' + encodeURIComponent(op.key), { method: 'DELETE' });
+          } else if (op.type === 'clear'){
+            await api('/api/entries', { method: 'DELETE' });
+          }
+          pendingOps.shift();
+          savePending();
+        } catch (err) {
+          if (err.status === 401) state.online = 'error';
+          scheduleFlush(5000);
+          break;
+        }
+      }
+      if (!pendingOps.length) refreshStats();
+    })();
+    try { await flushPromise; }
+    finally { flushPromise = null; }
+  }
+
+  function applyPendingToState(){
+    pendingOps.forEach(function(op){
+      if (op.type === 'clear'){ state.entries = []; return; }
+      if (op.type === 'delete'){
+        state.entries = state.entries.filter(function(e){ return e.key !== op.key; });
+        return;
+      }
+      if (op.type === 'add' && op.entry){
+        const exists = state.entries.some(function(e){ return e.key === op.entry.key; });
+        if (!exists){
+          state.entries.push(serverEntry(Object.assign({ addedAt: Date.now() }, op.entry)));
+        }
+      }
+    });
+  }
+
+  /* ================= 记录模型 ================= */
+  function localEntry(id){
+    const e = DB[id];
+    const subtitle = e.zh !== e.en ? e.en : (e.ja || '');
+    return {
+      key: 'local:' + id,
+      title: e.zh,
+      subtitle: subtitle || '',
+      year: e.year || null,
+      tags: e.tags.slice(0, 3),
+      source: 'local',
+      names: e.names.slice(),
+      addedAt: Date.now()
+    };
+  }
+  function bgmEntry(item){
+    const subtitle = item.subtitle || '';
+    const names = [item.title, subtitle].concat(item.aliases || []).filter(Boolean);
+    return {
+      key: 'bgm:' + item.id,
+      title: item.title || ('Bangumi #' + item.id),
+      subtitle: subtitle,
+      year: item.year || null,
+      tags: Array.isArray(item.tags) ? item.tags.slice(0, 3) : [],
+      source: 'bgm',
+      names: names,
+      addedAt: Date.now()
+    };
+  }
+  function customEntry(name){
+    return {
+      key: 'custom:' + Math.random().toString(36).slice(2, 12),
+      title: String(name || '').trim(),
+      subtitle: '',
+      year: null,
+      tags: [],
+      source: 'custom',
+      names: [String(name || '').trim()],
+      addedAt: Date.now()
+    };
+  }
+  function serverEntry(row){
+    return {
+      key: row.key,
+      title: row.title,
+      subtitle: row.subtitle || '',
+      year: Number.isFinite(row.year) ? row.year : null,
+      tags: Array.isArray(row.tags) ? row.tags : [],
+      source: row.source,
+      names: [row.title, row.subtitle].filter(Boolean),
+      addedAt: Number.isFinite(row.addedAt) ? row.addedAt : Date.now()
+    };
+  }
+
+  function findDuplicate(entry){
+    const names = [entry.title, entry.subtitle].filter(Boolean).map(normStrict).filter(Boolean);
+    for (let i = 0; i < state.entries.length; i++){
+      const e = state.entries[i];
+      if (e.key === entry.key) return e;
+      const other = [e.title, e.subtitle].filter(Boolean).map(normStrict).filter(Boolean);
+      for (let j = 0; j < other.length; j++){
+        if (names.indexOf(other[j]) >= 0) return e;
+      }
+    }
+    return null;
+  }
+
+  function addEntry(entry, opts){
+    const options = opts || {};
+    const dup = findDuplicate(entry);
+    if (dup) return { status: 'dup', entry: dup };
+    state.entries.push(entry);
+    freshKeys.add(entry.key);
+    queueOp({
+      type: 'add',
+      entry: {
+        key: entry.key, title: entry.title, subtitle: entry.subtitle,
+        year: entry.year, tags: entry.tags, source: entry.source
+      }
+    });
+    reflect();
+    if (!options.silent) renderAll();
+    return { status: 'added', entry: entry };
+  }
+
+  function removeEntry(key){
+    state.entries = state.entries.filter(function(e){ return e.key !== key; });
+    queueOp({ type: 'delete', key: key });
+    renderAll();
+  }
+
+  async function resetAll(){
+    if (!state.entries.length) return;
+    if (!confirm('清空本轮的 ' + state.entries.length + ' 部记录？历史成绩不会受影响。')) return;
+    await flushQueue();
+    state.entries = [];
+    state.startedAt = Date.now();
+    pendingOps = [];
+    savePending();
+    feed = [];
+    renderAll();
+    try {
+      const data = await api('/api/entries', { method: 'DELETE' });
+      if (Number.isFinite(data.startedAt)) state.startedAt = data.startedAt;
+      refreshStats();
+    } catch (err) {
+      pendingOps = [{ type: 'clear' }];
+      savePending();
+      scheduleFlush(3000);
+      pushFeed({ type: 'info', text: '清空请求暂未同步，会自动重试。' });
+      renderFeedback();
+    }
+    recallEl.focus();
+  }
+
+  /* ================= 加载 ================= */
+  async function loadEntries(){
+    if (!state.identity) return;
+    try {
+      const data = await api('/api/entries');
+      state.entries = (data.entries || []).map(serverEntry);
+    } catch (err) {
+      if (err.status === 401) state.online = 'error';
+    }
+  }
+
+  async function loadRounds(){
+    if (!state.identity) return;
+    try {
+      const data = await api('/api/rounds');
+      state.rounds = (data.rounds || []).map(function(round){
+        return {
+          id: round.id,
+          startedAt: Number(round.startedAt) || 0,
+          endedAt: Number(round.endedAt) || 0,
+          count: Number(round.count) || 0,
+          titles: Array.isArray(round.titles) ? round.titles : []
+        };
+      });
+    } catch (err) {
+      state.rounds = [];
+    }
+  }
+
+  async function loadStats(){
+    if (!state.identity) return;
+    try {
+      const stats = await api('/api/stats');
+      globalEl.textContent = stats.titles
+        ? '全站已认过 ' + stats.titles + ' 部番 · ' + stats.identities + ' 位观众'
+        : '全站还没有记录';
+    } catch (err) {
+      globalEl.textContent = '全站数据未连接';
+    }
+  }
+
+  async function loadBoard(){
+    if (!state.identity){
+      state.board = { rows: [], me: null, scope: state.boardScope };
+      renderBoard();
+      return;
+    }
+    try {
+      const data = await api('/api/leaderboard?scope=' + state.boardScope);
+      state.board = data;
+      renderBoard();
+    } catch (err) {
+      state.board = null;
+      renderBoard();
+    }
+  }
+
+  function refreshStats(){
+    if (statsTimer) clearTimeout(statsTimer);
+    statsTimer = setTimeout(loadStats, 900);
+  }
+
+  /* ================= 渲染 ================= */
+  function reflect(){
+    stampEl.classList.remove('thud');
+    void stampEl.offsetWidth;
+    stampEl.classList.add('thud');
+  }
+
+  function renderStamp(){
+    const n = state.entries.length;
+    stampNumEl.textContent = String(n);
+    stampEl.setAttribute('data-zero', n === 0 ? '1' : '0');
+    stampEl.setAttribute('aria-label', '已记住 ' + n + ' 部');
+    countNumEl.textContent = String(n);
+  }
+
+  function renderList(){
+    listEl.textContent = '';
+    emptyEl.hidden = state.entries.length > 0;
+    state.entries.forEach(function(e, i){
+      const label = sourceLabel(e.source) + (e.tags.length ? ' · ' + e.tags.join(' / ') : '');
+      const row = makeRow(i + 1, e.title, e.subtitle, e.year, label, e.key);
+      if (freshKeys.has(e.key)) row.classList.add('anim');
+      listEl.appendChild(row);
+    });
+    freshKeys.clear();
+  }
+
+  function makeRow(index, name, sub, year, tags, key){
+    const row = el('div', 'row');
+    row.appendChild(el('span', 'idx', pad(index)));
+    const nameEl = el('span', 'name', name);
+    if (sub) nameEl.appendChild(el('span', '', sub));
+    row.appendChild(nameEl);
+    row.appendChild(el('span', 'year', year ? String(year) : '—'));
+    const tagsEl = el('span', 'tags');
+    const parts = String(tags || '').split(' · ');
+    if (parts.length > 1){
+      tagsEl.appendChild(el('span', 'src', parts[0] + ' · '));
+      tagsEl.appendChild(document.createTextNode(parts.slice(1).join(' · ')));
+    } else {
+      tagsEl.textContent = tags || '—';
+    }
+    row.appendChild(tagsEl);
+    const kill = el('button', 'kill', '×');
+    kill.type = 'button';
+    kill.title = '删掉这一条';
+    kill.setAttribute('aria-label', '删掉 ' + name);
+    kill.dataset.key = key;
+    row.appendChild(kill);
+    return row;
+  }
+
+  function renderFeedback(){
+    feedbackEl.textContent = '';
+    feed.forEach(function(m){
+      const row = el('div', 'fb ' + m.type);
+      const mark = el('span', 'mark');
+      mark.textContent = m.type === 'ok' ? '＋' : m.type === 'dup' ? '↻' : m.type === 'info' ? '·' : '？';
+      row.appendChild(mark);
+      const body = el('div', 'body');
+
+      if (m.type === 'ok' && m.entry){
+        const e = m.entry;
+        body.appendChild(el('b', '', '《' + e.title + '》'));
+        const meta = [];
+        if (e.year) meta.push(String(e.year));
+        if (e.tags.length) meta.push(e.tags.join(' / '));
+        meta.push(sourceLabel(e.source));
+        if (m.online) meta.push('在线匹配');
+        if (m.approx) meta.push('近似名');
+        body.appendChild(el('small', '', meta.join(' · ')));
+      } else if (m.type === 'dup' && m.entry){
+        body.appendChild(el('b', '', '《' + m.entry.title + '》'));
+        body.appendChild(el('small', '', '之前已经记过，不重复计数'));
+      } else if (m.type === 'ask'){
+        body.appendChild(el('span', 'raw', '“' + m.raw + '”'));
+        body.appendChild(el('small', '', '可能是：'));
+        if (m.localIds){
+          m.localIds.forEach(function(id){
+            const e = DB[id];
+            const chip = el('button', 'chip', '《' + e.zh + '》' + (e.year ? ' ' + e.year : ''));
+            chip.type = 'button';
+            chip.addEventListener('click', function(){ confirmAsk(m, localEntry(id)); });
+            body.appendChild(chip);
+          });
+        } else if (m.onlineCandidates){
+          m.onlineCandidates.forEach(function(c){
+            const chip = el('button', 'chip', '《' + c.title + '》' + (c.year ? ' ' + c.year : ''));
+            chip.type = 'button';
+            chip.setAttribute('title', 'Bangumi 在线结果');
+            chip.addEventListener('click', function(){ confirmAsk(m, bgmEntry(c)); });
+            body.appendChild(chip);
+          });
+        }
+        const no = el('button', 'act', '都不是');
+        no.type = 'button';
+        no.addEventListener('click', function(){
+          feed = feed.filter(function(x){ return x !== m; });
+          pushFeed({ type: 'miss', raw: m.raw });
+          renderFeedback();
+          recallEl.focus();
+        });
+        body.appendChild(no);
+      } else if (m.type === 'miss'){
+        body.appendChild(el('span', 'raw', '“' + m.raw + '”'));
+        body.appendChild(el('small', '', '本地和 Bangumi 都没找到'));
+        const add = el('button', 'act', '仍要计入');
+        add.type = 'button';
+        add.addEventListener('click', function(){ manualAdd(m); });
+        body.appendChild(add);
+      } else if (m.type === 'error'){
+        body.appendChild(el('span', 'raw', '“' + m.raw + '”'));
+        body.appendChild(el('small', '', '联网核对失败'));
+        const retry = el('button', 'act', '重试');
+        retry.type = 'button';
+        retry.addEventListener('click', function(){ retryOnline(m); });
+        body.appendChild(retry);
+        const add = el('button', 'act', '仍要计入');
+        add.type = 'button';
+        add.addEventListener('click', function(){ manualAdd(m); });
+        body.appendChild(add);
+      } else if (m.type === 'info'){
+        body.appendChild(el('small', '', m.text));
+      }
+
+      row.appendChild(body);
+      feedbackEl.appendChild(row);
+    });
+  }
+
+  function renderStats(){
+    const n = state.entries.length;
+    rCountEl.textContent = String(n);
+    rElapsedEl.textContent = '本轮用时 ' + fmtShort(Date.now() - state.startedAt) + ' · 本地题库 ' + DB.length + ' 部';
+    const src = { local: 0, bgm: 0, custom: 0 };
+    state.entries.forEach(function(e){ if (src[e.source] != null) src[e.source]++; });
+    rSourcesEl.textContent = '本地 ' + src.local + ' · Bangumi ' + src.bgm + ' · 手动 ' + src.custom;
+    rGuessEl.textContent = guess.total ? ('猜番挑战：' + guess.score + ' / ' + guess.total + ' 答对') : '';
+
+    rDecadesEl.textContent = '';
+    const dec = new Map();
+    state.entries.forEach(function(e){
+      if (!e.year) return;
+      const d = Math.floor(e.year / 10) * 10;
+      dec.set(d, (dec.get(d) || 0) + 1);
+    });
+    const keys = Array.from(dec.keys()).sort(function(a, b){ return a - b; });
+    if (!keys.length){
+      rDecadesEl.appendChild(el('div', 'h-empty', '还没有记录。'));
+    } else {
+      const max = Math.max.apply(null, keys.map(function(k){ return dec.get(k); }));
+      keys.forEach(function(k){
+        const row = el('div', 'bar-row');
+        row.appendChild(el('span', '', k + 's'));
+        const bar = el('div', 'bar');
+        const fill = el('i');
+        fill.style.width = (dec.get(k) / max * 100).toFixed(1) + '%';
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        row.appendChild(el('span', 'num', String(dec.get(k))));
+        rDecadesEl.appendChild(row);
+      });
+    }
+
+    rTagsEl.textContent = '';
+    const tags = new Map();
+    state.entries.forEach(function(e){
+      (e.tags || []).forEach(function(t){ tags.set(t, (tags.get(t) || 0) + 1); });
+    });
+    const top = Array.from(tags.entries()).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 6);
+    if (!top.length){
+      rTagsEl.appendChild(el('div', 'h-empty', '还没有记录。'));
+    } else {
+      const max = top[0][1];
+      top.forEach(function(pair){
+        const row = el('div', 'bar-row');
+        row.appendChild(el('span', '', pair[0]));
+        const bar = el('div', 'bar');
+        const fill = el('i');
+        fill.style.width = (pair[1] / max * 100).toFixed(1) + '%';
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        row.appendChild(el('span', 'num', String(pair[1])));
+        rTagsEl.appendChild(row);
+      });
+    }
+    renderHistory();
+    const saveBtn = $('save-score');
+    if (saveBtn) saveBtn.disabled = !state.entries.length || !state.identity;
+  }
+
+  function renderHistory(){
+    rHistoryEl.textContent = '';
+    if (!state.rounds.length){
+      rHistoryEl.appendChild(el('div', 'h-empty', '还没有保存过成绩。点“保存这一轮”会生成一条历史结果。'));
+      return;
+    }
+    let best = 0;
+    state.rounds.forEach(function(r){ if (r.count > best) best = r.count; });
+    state.rounds.forEach(function(r){
+      const details = document.createElement('details');
+      details.className = 'h-item';
+      const summary = document.createElement('summary');
+      summary.appendChild(el('span', '', stampDate(r.endedAt)));
+      if (r.count === best && best > 0) summary.appendChild(el('span', 'best', '最佳'));
+      summary.appendChild(el('b', '', String(r.count) + ' 部'));
+      details.appendChild(summary);
+      const ul = el('ul');
+      r.titles.forEach(function(title){ ul.appendChild(el('li', '', title)); });
+      details.appendChild(ul);
+      rHistoryEl.appendChild(details);
+    });
+  }
+
+  function renderBoard(){
+    boardListEl.textContent = '';
+    const data = state.board;
+    if (!data){
+      boardListEl.appendChild(el('div', 'board-empty', '加载中…'));
+      boardMeEl.hidden = true;
+      return;
+    }
+    const scopeLabel = state.boardScope === 'users' ? '注册用户' : '全部';
+    boardNoteEl.textContent = data.rows.length ? ('前 ' + data.rows.length + ' 名 · ' + scopeLabel) : '';
+    if (!data.rows.length){
+      boardListEl.appendChild(el('div', 'board-empty', '还没有人上榜，写下第一部番就能占个位置。'));
+    } else {
+      data.rows.forEach(function(row, i){
+        const isSelf = state.identity && row.id === state.identity.id;
+        const rowEl = el('div', 'board-row' + (isSelf ? ' self' : ''));
+        rowEl.appendChild(el('span', 'rank' + (i < 3 ? ' top' : ''), pad(i + 1)));
+        const left = el('div', 'nick-line');
+        left.appendChild(el('span', 'nick', row.displayName));
+        left.appendChild(el('span', 'badge' + (row.type === 'user' ? ' user' : ''), row.type === 'user' ? '注册' : '游客'));
+        const info = el('div');
+        info.appendChild(left);
+        if (row.best > 0) info.appendChild(el('span', 'sub', '最佳 ' + row.best + ' 部'));
+        rowEl.appendChild(info);
+        const count = el('span', 'num', String(row.count));
+        count.appendChild(el('small', '', '部'));
+        rowEl.appendChild(count);
+        boardListEl.appendChild(rowEl);
+      });
+    }
+    if (data.me && !(state.boardScope === 'users' && state.identity && state.identity.type !== 'user')){
+      boardMeEl.hidden = false;
+      boardMeEl.textContent = data.me.count
+        ? ('你的当前排名：第 ' + data.me.rank + ' 名 · ' + data.me.count + ' 部（' + scopeLabel + '）')
+        : '你还没有记录，写下第一部番就能上榜。';
+    } else {
+      boardMeEl.hidden = true;
+    }
+  }
+
+  function renderAll(){
+    renderStamp();
+    renderList();
+    renderStats();
+    renderFeedback();
+    renderWho();
+    renderNet();
+    if (state.board) renderBoard();
+  }
+
+  /* ================= 反馈 ================= */
+  function pushFeed(msg){
+    feed.unshift(msg);
+    if (feed.length > 8) feed.pop();
+  }
+
+  function confirmAsk(msg, entry){
+    feed = feed.filter(function(x){ return x !== msg; });
+    const res = addEntry(entry, { silent: true });
+    if (res.status === 'added'){
+      pushFeed({ type: 'ok', entry: entry, online: entry.source === 'bgm' });
+    } else {
+      pushFeed({ type: 'dup', entry: res.entry });
+    }
+    renderAll();
+    recallEl.focus();
+  }
+
+  function manualAdd(msg){
+    const entry = customEntry(msg.raw);
+    if (!entry.title) return;
+    feed = feed.filter(function(x){ return x !== msg; });
+    const res = addEntry(entry, { silent: true });
+    if (res.status === 'added') pushFeed({ type: 'ok', entry: entry });
+    else pushFeed({ type: 'dup', entry: res.entry });
+    renderAll();
+    recallEl.focus();
+  }
+
+  async function retryOnline(msg){
+    feed = feed.filter(function(x){ return x !== msg; });
+    const pendingMsg = { type: 'info', text: '正在联网核对 “' + msg.raw + '”…' };
+    pushFeed(pendingMsg);
+    renderFeedback();
+    const results = await matchOnline([msg.raw]);
+    feed = feed.filter(function(x){ return x !== pendingMsg; });
+    const stats = { added: 0, dup: 0, ask: 0, miss: 0, err: 0 };
+    const out = applyOnlineResult(results[0], stats);
+    pushFeed(out);
+    renderAll();
+  }
+
+  /* ================= 在线匹配 ================= */
+  async function matchOnline(names){
+    const out = [];
+    for (let i = 0; i < names.length; i += 5){
+      const chunk = names.slice(i, i + 5);
+      const controller = new AbortController();
+      const timer = setTimeout(function(){ controller.abort(); }, 30000);
+      try {
+        const res = await fetch('/api/match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names: chunk }),
+          signal: controller.signal
+        });
+        if (!res.ok) throw new Error('match_' + res.status);
+        const data = await res.json();
+        const results = data.results || [];
+        state.online = results.some(function(r){ return r.status === 'error'; }) ? 'error' : 'ok';
+        const byQuery = new Map();
+        results.forEach(function(r){ byQuery.set(r.query, r); });
+        chunk.forEach(function(name){
+          out.push(byQuery.get(name) || { query: name, status: 'error' });
+        });
+      } catch (err) {
+        state.online = 'error';
+        chunk.forEach(function(name){ out.push({ query: name, status: 'error' }); });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    return out;
+  }
+
+  function applyOnlineResult(r, stats){
+    if (r && r.status === 'matched' && r.item){
+      const entry = bgmEntry(r.item);
+      const res = addEntry(entry, { silent: true });
+      if (res.status === 'added'){
+        stats.added++;
+        return { type: 'ok', entry: entry, online: true };
+      }
+      stats.dup++;
+      return { type: 'dup', entry: res.entry };
+    }
+    if (r && r.status === 'candidates' && Array.isArray(r.candidates) && r.candidates.length){
+      stats.ask++;
+      return { type: 'ask', raw: r.query, onlineCandidates: r.candidates };
+    }
+    if (r && r.status === 'error'){
+      stats.err++;
+      return { type: 'error', raw: r.query };
+    }
+    stats.miss++;
+    return { type: 'miss', raw: (r && r.query) || '' };
+  }
+
+  /* ================= 提交 ================= */
+  function setBusy(b){
+    state.busy = b;
+    submitBtn.disabled = b;
+    submitBtn.textContent = b ? '核对中…' : '记下来';
+    renderNet();
+  }
+
+  async function submitRecall(){
+    if (state.busy) return;
+    if (!state.identity){
+      pushFeed({ type: 'info', text: '服务器未连接，暂时无法保存进度。请刷新页面重试。' });
+      renderFeedback();
+      return;
+    }
+    const text = recallEl.value;
+    if (!text.trim()){ recallEl.focus(); return; }
+    const parts = splitInput(text);
+    if (!parts.length){ recallEl.value = ''; return; }
+
+    recallEl.value = '';
+    setBusy(true);
+
+    const stats = { added: 0, dup: 0, ask: 0, miss: 0, err: 0 };
+    const msgs = [];
+    const pending = [];
+
+    parts.forEach(function(raw){
+      const r = localLookup(raw);
+      if (r.status === 'exact' || r.status === 'fuzzy'){
+        const entry = localEntry(r.id);
+        const res = addEntry(entry, { silent: true });
+        if (res.status === 'added'){
+          stats.added++;
+          msgs.push({ type: 'ok', entry: entry, approx: r.status === 'fuzzy' });
+        } else {
+          stats.dup++;
+          msgs.push({ type: 'dup', entry: res.entry });
+        }
+      } else if (r.status === 'ambiguous'){
+        stats.ask++;
+        msgs.push({ type: 'ask', raw: raw, localIds: r.candidates.map(function(c){ return c.id; }) });
+      } else {
+        pending.push(raw);
+      }
+    });
+
+    let pendingMsg = null;
+    if (pending.length){
+      pendingMsg = { type: 'info', text: '正在联网核对 ' + pending.length + ' 个名字…' };
+      pushFeed(pendingMsg);
+      renderFeedback();
+      const results = await matchOnline(pending);
+      results.forEach(function(r){ msgs.push(applyOnlineResult(r, stats)); });
+      feed = feed.filter(function(x){ return x !== pendingMsg; });
+    }
+
+    const summary = {
+      type: 'info',
+      text: '这次处理 ' + parts.length + ' 条：新增 ' + stats.added + '，重复 ' + stats.dup +
+        '，待确认 ' + stats.ask + '，未识别 ' + stats.miss +
+        (stats.err ? '，联网失败 ' + stats.err : '') + '。'
+    };
+
+    if (parts.length > 1){
+      if (parts.length <= 4){
+        msgs.slice().reverse().forEach(pushFeed);
+        pushFeed(summary);
+      } else {
+        const problems = msgs.filter(function(m){
+          return m.type === 'ask' || m.type === 'miss' || m.type === 'error';
+        });
+        problems.slice(0, 6).forEach(pushFeed);
+        if (problems.length > 6) summary.text += ' 仅显示前 6 条待确认或未识别。';
+        pushFeed(summary);
+      }
+    } else {
+      msgs.forEach(pushFeed);
+    }
+
+    await flushQueue();
+    setBusy(false);
+    renderAll();
+    refreshStats();
+    if (!$('panel-board').hidden) loadBoard();
+    recallEl.focus();
+  }
+
+  /* ================= 历史成绩 ================= */
+  async function saveRound(){
+    if (!state.entries.length || !state.identity) return;
+    await flushQueue();
+    if (pendingOps.length){
+      pushFeed({ type: 'info', text: '还有进度没有保存，请检查网络后再试。' });
+      renderFeedback();
+      return;
+    }
+    try {
+      const data = await api('/api/rounds', { method: 'POST' });
+      state.rounds.unshift(data.round);
+      state.rounds = state.rounds.slice(0, 20);
+      renderHistory();
+      refreshStats();
+      if (!$('panel-board').hidden) loadBoard();
+      flashButton($('save-score'), '已保存');
+    } catch (err) {
+      pushFeed({ type: 'info', text: '保存失败，请稍后再试。' });
+      renderFeedback();
+    }
+  }
+
+  function buildListText(){
+    const lines = ['番剧记忆力测试 · 我记住了 ' + state.entries.length + ' 部番', ''];
+    state.entries.forEach(function(e, i){
+      const src = sourceLabel(e.source);
+      lines.push(pad(i + 1) + '. ' + e.title + (e.year ? '（' + e.year + '）' : '') + ' · ' + src);
+    });
+    lines.push('', '本地题库 ' + DB.length + ' 部 + Bangumi 在线检索 · ' + stampDate(Date.now()));
+    return lines.join('\n');
+  }
+
+  function fallbackCopy(text){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+  }
+
+  function flashButton(btn, text){
+    const old = btn.textContent;
+    btn.textContent = text;
+    setTimeout(function(){ btn.textContent = old; }, 1600);
+  }
+
+  /* ================= 猜番挑战（本地题库） ================= */
+  const QUESTION_MS = 30000;
+  const guess = {
+    started: false, pool: [], current: null, num: 0, score: 0, total: 0,
+    answered: false, hint: 0, remain: QUESTION_MS, deadline: 0, timer: null, running: false
+  };
+  const qNumEl = $('q-num'), qScoreEl = $('q-score'), qMetaEl = $('q-meta');
+  const qBlanksEl = $('q-blanks'), qHintEl = $('q-hint'), qResultEl = $('q-result');
+  const guessInput = $('guess'), guessSubmit = $('guess-submit');
+  const guessHint = $('guess-hint'), guessNext = $('guess-next');
+  const timerFill = $('timer-fill');
+
+  function shuffle(a){
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function startGuess(){
+    guess.pool = shuffle(DB.map(function(_, i){ return i; }));
+    guess.num = 0; guess.score = 0; guess.total = 0; guess.started = true;
+    nextQuestion(true);
+  }
+
+  function nextQuestion(first){
+    if (!guess.pool.length){
+      guess.pool = shuffle(DB.map(function(_, i){ return i; }));
+      qResultEl.className = 'q-result good';
+      qResultEl.textContent = '题库抽完一轮，重新洗牌继续。';
+    }
+    guess.current = guess.pool.pop();
+    guess.num++;
+    guess.answered = false;
+    guess.hint = 0;
+    guess.remain = QUESTION_MS;
+    guess.running = false;
+    stopTimer();
+    timerFill.style.width = '100%';
+    qNumEl.textContent = String(guess.num);
+    qScoreEl.textContent = String(guess.score);
+    const e = DB[guess.current];
+    qMetaEl.textContent = e.year + ' 年 · ' + (e.tags.join(' / ') || '番剧') + ' · ' + cpLen(e.zh) + ' 个字';
+    qHintEl.textContent = '提示：先看年份和类型，再想名字。开始输入后计时。';
+    qResultEl.className = 'q-result';
+    qResultEl.textContent = '';
+    guessInput.value = '';
+    guessInput.disabled = false;
+    guessSubmit.disabled = false;
+    guessHint.disabled = false;
+    guessNext.hidden = true;
+    renderBlanks();
+    if (!first) guessInput.focus();
+  }
+
+  function renderBlanks(){
+    if (guess.current == null || !guess.started){ qBlanksEl.textContent = ''; return; }
+    const chars = Array.from(DB[guess.current].zh);
+    qBlanksEl.textContent = '';
+    chars.forEach(function(ch, i){
+      const box = el('span', 'blank');
+      let show = false;
+      if (guess.answered) show = true;
+      else if (guess.hint >= 1 && i === 0) show = true;
+      else if (guess.hint >= 2 && i === chars.length - 1) show = true;
+      if (/^[\s·：:，,。！？!?、]$/.test(ch)) show = true;
+      if (show){ box.textContent = ch; box.classList.add('filled'); }
+      qBlanksEl.appendChild(box);
+    });
+  }
+
+  function updateTimerUI(){
+    timerFill.style.width = (Math.max(0, guess.remain) / QUESTION_MS * 100).toFixed(2) + '%';
+  }
+  function ensureTimer(){
+    if (guess.running || guess.answered || guess.current == null) return;
+    guess.running = true;
+    guess.deadline = Date.now() + guess.remain;
+    stopTimer();
+    guess.timer = setInterval(function(){
+      guess.remain = guess.deadline - Date.now();
+      if (guess.remain <= 0){
+        guess.remain = 0;
+        updateTimerUI();
+        finishQuestion(false, null, '', 'timeout');
+        return;
+      }
+      updateTimerUI();
+    }, 100);
+  }
+  function stopTimer(){
+    if (guess.timer){ clearInterval(guess.timer); guess.timer = null; }
+  }
+  function pauseTimer(){
+    if (guess.running && guess.timer){
+      guess.remain = Math.max(0, guess.deadline - Date.now());
+      stopTimer();
+      guess.running = false;
+    }
+  }
+
+  function submitGuess(){
+    if (guess.answered){ nextQuestion(false); return; }
+    if (guess.current == null) return;
+    const raw = guessInput.value.trim();
+    if (!raw){ guessInput.focus(); return; }
+    ensureTimer();
+    const r = localLookup(raw);
+    let ok = false, other = null;
+    if (r.status === 'exact' || r.status === 'fuzzy'){
+      if (r.id === guess.current) ok = true; else other = r.id;
+    } else if (r.status === 'ambiguous'){
+      if (r.candidates.some(function(c){ return c.id === guess.current; })) ok = true;
+      else if (r.candidates.length) other = r.candidates[0].id;
+    }
+    finishQuestion(ok, other, raw, 'answer');
+  }
+
+  function finishQuestion(ok, otherId, raw, kind){
+    if (guess.answered) return;
+    guess.answered = true;
+    stopTimer();
+    guess.running = false;
+    guess.total++;
+    if (ok) guess.score++;
+    qScoreEl.textContent = String(guess.score);
+    guessInput.disabled = true;
+    guessSubmit.disabled = true;
+    guessHint.disabled = true;
+    const answer = DB[guess.current].zh;
+    let text = '';
+    if (kind === 'timeout'){
+      text = '时间到。答案是《' + answer + '》。';
+    } else if (ok){
+      text = '答对了：《' + answer + '》' + (guess.hint ? '（用了提示）' : '') + '。';
+    } else if (otherId != null){
+      text = '不是这部。你写的是《' + DB[otherId].zh + '》，答案是《' + answer + '》。';
+    } else {
+      text = '没有查到“' + raw + '”。答案是《' + answer + '》。';
+    }
+    qResultEl.className = 'q-result ' + (ok ? 'good' : 'bad');
+    qResultEl.textContent = text;
+    renderBlanks();
+    guessNext.hidden = false;
+    guessNext.focus();
+  }
+
+  /* ================= 事件 ================= */
+  submitBtn.addEventListener('click', submitRecall);
+  recallEl.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing){
+      ev.preventDefault();
+      submitRecall();
+    }
+  });
+
+  listEl.addEventListener('click', function(ev){
+    const btn = ev.target.closest('.kill');
+    if (!btn) return;
+    const key = btn.dataset.key;
+    if (key) removeEntry(key);
+  });
+
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(t){
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      document.querySelectorAll('.panel').forEach(function(p){
+        p.hidden = p.id !== tab.dataset.panel;
+      });
+      if (tab.dataset.panel === 'panel-guess'){
+        if (!guess.started) startGuess();
+        else if (!guess.answered && guess.running){ ensureTimer(); }
+        renderBlanks();
+      } else {
+        pauseTimer();
+      }
+      if (tab.dataset.panel === 'panel-record') renderStats();
+      if (tab.dataset.panel === 'panel-board') loadBoard();
+    });
+  });
+
+  document.querySelectorAll('.board-tools .chip').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.boardScope = btn.dataset.scope === 'users' ? 'users' : 'all';
+      document.querySelectorAll('.board-tools .chip').forEach(function(b){
+        b.classList.toggle('active', b === btn);
+      });
+      loadBoard();
+    });
+  });
+
+  guessInput.addEventListener('keydown', function(ev){
+    if (ev.key === 'Enter' && !ev.isComposing){
+      ev.preventDefault();
+      submitGuess();
+    }
+  });
+  guessInput.addEventListener('input', ensureTimer);
+  guessSubmit.addEventListener('click', submitGuess);
+  guessNext.addEventListener('click', function(){ nextQuestion(false); });
+  guessHint.addEventListener('click', function(){
+    if (guess.answered) return;
+    ensureTimer();
+    guess.hint = Math.min(3, guess.hint + 1);
+    if (guess.hint === 1) qHintEl.textContent = '首字已经亮出来了。';
+    else if (guess.hint === 2) qHintEl.textContent = '首字、尾字都亮了。';
+    else {
+      const e = DB[guess.current];
+      qHintEl.textContent = e.en ? ('英文名：' + e.en) : (e.ja ? ('日文名：' + e.ja) : '没有更多提示了。');
+      guessHint.disabled = true;
+    }
+    renderBlanks();
+    guessInput.focus();
+  });
+
+  whoBtn.addEventListener('click', openAuth);
+  authCloseEl.addEventListener('click', closeAuth);
+  modalEl.addEventListener('click', function(ev){
+    if (ev.target === modalEl) closeAuth();
+  });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape' && !modalEl.hidden) closeAuth();
+  });
+  document.querySelectorAll('.auth-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){ setAuthMode(tab.dataset.mode === 'register' ? 'register' : 'login'); });
+  });
+  authFormEl.addEventListener('submit', submitAuth);
+  authLogoutEl.addEventListener('click', doLogout);
+
+  $('save-score').addEventListener('click', saveRound);
+
+  $('copy-list').addEventListener('click', function(){
+    const btn = this;
+    const text = buildListText();
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ flashButton(btn, '已复制'); })
+        .catch(function(){ fallbackCopy(text); flashButton(btn, '已复制'); });
+    } else {
+      fallbackCopy(text);
+      flashButton(btn, '已复制');
+    }
+  });
+
+  $('download-list').addEventListener('click', function(){
+    const blob = new Blob([buildListText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = '番剧清单-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  $('reset-all').addEventListener('click', resetAll);
+
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) pauseTimer();
+  });
+  window.addEventListener('online', function(){
+    state.online = 'ok';
+    renderNet();
+    flushQueue();
+  });
+
+  /* ================= 时钟 ================= */
+  function tick(){
+    const ms = Date.now() - state.startedAt;
+    clockEl.textContent = '在场 ' + fmtClock(ms);
+    elapsedEl.textContent = '用时 ' + fmtClock(ms);
+    if (!$('panel-record').hidden){
+      rElapsedEl.textContent = '本轮用时 ' + fmtShort(ms) + ' · 本地题库 ' + DB.length + ' 部';
+    }
+  }
+
+  /* ================= 启动 ================= */
+  async function boot(){
+    if (!isHttp()){
+      state.online = 'fatal';
+      state.identity = null;
+      renderAll();
+      pushFeed({ type: 'info', text: '请通过服务器访问：本地运行 npm run dev，或部署到 Cloudflare Workers。' });
+      renderFeedback();
+      return;
+    }
+    try {
+      localStorage.removeItem('anime-memory-v2');
+      localStorage.removeItem('anime-memory-v1');
+      localStorage.removeItem('anime-memory-session');
+    } catch (err) {}
+    try {
+      await ensureIdentity();
+      loadPending();
+      await loadEntries();
+      applyPendingToState();
+      await flushQueue();
+      await Promise.all([loadConfig(), loadRounds(), loadStats()]);
+      renderAll();
+    } catch (err) {
+      state.online = 'error';
+      state.identity = null;
+      pushFeed({ type: 'info', text: '无法连接服务器，请刷新页面重试。' });
+      renderAll();
+    }
+  }
+
+  renderAll();
+  tick();
+  setInterval(tick, 1000);
+  boot();
+})();
+</script>
+</body>
+</html>

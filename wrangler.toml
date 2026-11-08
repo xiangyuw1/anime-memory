@@ -1,0 +1,25 @@
+name = "anime-memory"
+main = "src/worker.js"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "anime-memory"
+# 创建 D1 后，把 wrangler d1 create 输出的 database_id 填到这里
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+# Bangumi 要求请求带上能识别应用的 User-Agent，建议改成你自己的域名/仓库
+BGM_UA = "anime-memory/1.0 (https://example.com)"
+
+# Cloudflare Turnstile 的 site key（公开值）。留空则前端不显示人机验证。
+# 还要用 `wrangler secret put TURNSTILE_SECRET` 配置对应的 secret；两者都配好才会真正校验。
+TURNSTILE_SITE_KEY = ""
+
+# 可选：密码哈希迭代次数（默认 25000）。免费版 Worker CPU 限制较紧时不要调太高。
+# PBKDF2_ITERATIONS = "25000"
