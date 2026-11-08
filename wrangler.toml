@@ -10,12 +10,12 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "anime-memory"
 # 创建 D1 后，把 wrangler d1 create 输出的 database_id 填到这里
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "15ed3a62-45d2-4722-9e81-105e96d45294"
 migrations_dir = "migrations"
 
 [vars]
 # Bangumi 要求请求带上能识别应用的 User-Agent，建议改成你自己的域名/仓库
-BGM_UA = "anime-memory/1.0 (https://example.com)"
+BGM_UA = "anime-memory/1.0 (https://github.com/xiangyuw1/anime-memory)"
 
 # Cloudflare Turnstile 的 site key（公开值）。留空则前端不显示人机验证。
 # 还要用 `wrangler secret put TURNSTILE_SECRET` 配置对应的 secret；两者都配好才会真正校验。
